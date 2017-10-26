@@ -1,0 +1,8 @@
+# sudo: false
+# 2017-10-26 01:25 UTC
+
+os:
+  - linux
+
+script:
+  - /bin/bash --login "run_vers.sh"
