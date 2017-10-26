@@ -1,4 +1,8 @@
-require "rbconfig"
+# frozen_string_literal: true
+
+# Copyright (C) 2017 MSP-Greg
+
+require "rbconfig" unless defined? RbConfig
 
 module VersInfo
   @@col_wid = [34, 14, 17, 26, 10, 16]
