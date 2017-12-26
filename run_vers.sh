@@ -29,6 +29,9 @@ rvm install 2.4.3 --binary > /dev/null 2>&1 &&
 rvm use 2.4.3 &&
 ruby travis_info.rb
 
+rvm use 2.5 &&
+ruby travis_info.rb
+
 rvm install ruby-head --binary > /dev/null 2>&1 &&
 rvm use ruby-head &&
 ruby travis_info.rb
