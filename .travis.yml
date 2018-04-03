@@ -4,6 +4,7 @@
 
 os:
   - linux
+  - osx
 
 script:
   - /bin/bash --login "run_vers.sh"
