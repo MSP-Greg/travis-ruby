@@ -5,6 +5,10 @@
 require "rbconfig" unless defined? RbConfig
 
 module VersInfo
+
+  YELLOW = "\e[33;1m"
+  RESET = "\e[0m"
+
   @@col_wid = [34, 14, 17, 26, 10, 16]
 
   @@dash = 8212.chr(Encoding::UTF_8)
@@ -18,7 +22,7 @@ module VersInfo
 #        `appveyor UpdateBuild -Message \"#{title}\"`
 #      end
 
-      puts " #{Time.now.getutc}     Travis Ruby #{RUBY_VERSION}".rjust(110, @@dash)
+      highlight " #{Time.now.getutc}     Travis Ruby #{RUBY_VERSION}".rjust(100, @@dash)
       puts
       puts RUBY_DESCRIPTION
       puts
@@ -28,7 +32,9 @@ module VersInfo
       puts
       first('rubygems'  , 'Gem::VERSION'  , 2)  { Gem::VERSION     }
       puts
-      first('bigdecimal', 'BigDecimal.ver', 2)  { BigDecimal.ver   }
+      first('bigdecimal', 'BigDecimal.ver', 2)  {
+        BigDecimal.const_defined?(:VERSION) ? BigDecimal::VERSION : BigDecimal.ver
+      }
       first('gdbm'      , 'GDBM::VERSION' , 2)  { GDBM::VERSION    }
       first('json/ext'  , 'JSON::VERSION' , 2)  { JSON::VERSION    }
       puts
@@ -68,14 +74,15 @@ module VersInfo
           "#{'Bignum::GMP_VERSION'.ljust( @@col_wid[3])}#{Bignum::GMP_VERSION}" :
           "#{'Bignum::GMP_VERSION'.ljust( @@col_wid[3])}Unknown"
       end
-
-      puts "\n#{@@dash * 56} Load Test"
+      puts
+      highlight "#{@@dash * 56} Load Test"
       loads2?('dbm'    , 'DBM'    , 'fiddle' , 'Fiddle' , 4)
       loads2?('digest' , 'Digest' , 'socket' , 'Socket' , 4)
       loads1?('zlib'   , 'Zlib', 4, chk_rake(4))
 
       gem_list
-      puts "\n#{@@dash * 110}"
+      puts
+      highlight "#{@@dash * 100}"
     end
 
   private
@@ -199,25 +206,33 @@ module VersInfo
       orig_ui = cmd.ui
       cmd.ui = strm_io
       cmd.execute
-      ret = sio_out.string
+      ary = sio_out.string.split(/\r*\n/)
       cmd.ui = orig_ui
-      ary_bundled = ret.split(/\r*\n/)
-      puts "\n#{@@dash * 18} #{"Default Gems #{@@dash * 5}".ljust(30)} #{@@dash * 18} Bundled Gems #{@@dash * 4}"
-      ary_bundled.reject! { |i| /^[a-z]/ !~ i }
-      ary_default = ary_bundled.select { |i| /default: / =~ i }
-      ary_bundled.reject! { |i| /default: / =~ i }
 
-      ary_default.map! { |i| i.gsub(/\)|default: /, '') }
-      ary_bundled.map! { |i| i.gsub(/\)/, '') }
+      ary_bundled = []
+      ary_default = []
+
+      ary.each { |s|
+        gem_name = s[/\A[^ ]+/]
+        s.scan(/(default: |\(|, )(\d+\.\d+[^,)]*)/) { |type, vers|
+          if type == 'default: '
+            ary_default << [gem_name, vers]
+          else
+            ary_bundled << [gem_name, vers]
+          end
+        }
+      }
+      puts
+      highlight "#{@@dash * 21} #{"Default Gems #{@@dash * 5}".ljust(33)} #{@@dash * 21} Bundled Gems #{@@dash * 4}"
 
       max_rows = [ary_default.length || 0, ary_bundled.length || 0].max
       (0..(max_rows-1)).each { |i|
-        dflt  = ary_default[i] ? ary_default[i].split(" (") : ["", ""]
-        bndl  = ary_bundled[i] ? ary_bundled[i].split(" (") : nil
+        dflt  = ary_default[i] ? ary_default[i] : ["", ""]
+        bndl  = ary_bundled[i] ? ary_bundled[i] : nil
         if bndl
-          puts "#{dflt[1].rjust(18)} #{dflt[0].ljust(30)} #{bndl[1].rjust(18)} #{bndl[0]}"
+          puts "#{dflt[1].rjust(21)} #{dflt[0].ljust(33)} #{bndl[1].rjust(21)} #{bndl[0]}"
         else
-          puts "#{dflt[1].rjust(18)} #{dflt[0]}"
+          puts "#{dflt[1].rjust(21)} #{dflt[0]}"
         end
       }
     ensure
@@ -277,6 +292,10 @@ module VersInfo
       "*** FAILURE ***"
     end
 
+    def highlight(str)
+      puts "#{YELLOW}#{str}#{RESET}"
+    end
+   
   end
 end
 
