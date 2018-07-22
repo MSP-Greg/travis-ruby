@@ -6,7 +6,7 @@ require "rbconfig" unless defined? RbConfig
 
 module VersInfo
 
-  YELLOW = "\e[33;1m"
+  YELLOW = "\e[33m" # "\e[0;33m"
   RESET = "\e[0m"
 
   @@col_wid = [34, 14, 17, 26, 10, 16]
@@ -22,13 +22,12 @@ module VersInfo
 #        `appveyor UpdateBuild -Message \"#{title}\"`
 #      end
 
-      highlight " #{Time.now.getutc}     Travis Ruby #{RUBY_VERSION}".rjust(100, @@dash)
-      puts
+      highlight " #{Time.now.getutc}  Travis Ruby #{RUBY_VERSION}".rjust(100, @@dash)
       puts RUBY_DESCRIPTION
       puts
       gcc = RbConfig::CONFIG["CC_VERSION_MESSAGE"] ?
         RbConfig::CONFIG["CC_VERSION_MESSAGE"][/\A.+?\n/].strip : 'unknown'
-      puts "       gcc info: #{gcc}"
+      puts "Compiler Info    #{gcc}"
       puts
       first('rubygems'  , 'Gem::VERSION'  , 2)  { Gem::VERSION     }
       puts
@@ -74,14 +73,18 @@ module VersInfo
           "#{'Bignum::GMP_VERSION'.ljust( @@col_wid[3])}#{Bignum::GMP_VERSION}" :
           "#{'Bignum::GMP_VERSION'.ljust( @@col_wid[3])}Unknown"
       end
-      puts
-      highlight "#{@@dash * 56} Load Test"
-      loads2?('dbm'    , 'DBM'    , 'fiddle' , 'Fiddle' , 4)
-      loads2?('digest' , 'Digest' , 'socket' , 'Socket' , 4)
-      loads1?('zlib'   , 'Zlib', 4, chk_rake(4))
+
+      highlight "\n#{@@dash * 5} CLI Test #{@@dash * 17}    #{@@dash * 5} Require Test #{@@dash * 39}"
+      puts chk_cli('bundler', 'bundle version', /\ABundler version \d{1,2}\.\d{1,2}\.\d{1,2}/) +
+        loads2('dbm'    , 'DBM'    , 'socket' , 'Socket' , 4)
+
+      puts chk_cli('gem', 'gem --version', /\A\d{1,2}\.\d{1,2}\.\d{1,2}/) +
+        loads2('digest' , 'Digest' , 'zlib'   , 'Zlib'   , 4)
+
+      puts chk_cli('rake', 'rake -V', /\Arake, version \d{1,2}\.\d{1,2}\.\d{1,2}/) +
+        loads1('fiddle' , 'Fiddle', 4)
 
       gem_list
-      puts
       highlight "#{@@dash * 100}"
     end
 
@@ -97,50 +100,25 @@ module VersInfo
       end
     end
 
-    def chk_rake(idx)
-      require 'open3'
-      ret = String.new
-      Open3.popen3("rake -V") {|stdin, stdout, stderr, wait_thr|
-        ret = stdout.read.strip
-      }
-      if /\d+\.\d+\.\d+/ =~ ret
-        "#{'Rake CLI'.ljust(@@col_wid[idx])}  Ok".ljust(@@col_wid[0])
-      else
-        "#{'Rake CLI'.ljust(@@col_wid[idx])}  Does not load!".ljust(@@col_wid[0])
-      end
-    rescue
-      "#{'Rake CLI'.ljust(@@col_wid[idx])}  Does not load!".ljust(@@col_wid[0])
-    end
-    
-    def loads1?(req, str, idx, pref = nil)
-      begin
-        require req
-        if pref
-          puts "#{pref}#{str.ljust(@@col_wid[idx+1])}  Ok"
-        else
-          puts "#{str.ljust(@@col_wid[idx])}  Ok"
-        end
-      rescue LoadError
-        if pref
-          puts "#{pref}#{str.ljust(@@col_wid[idx]+1)}  Does not load!"
-        else
-          puts "#{str.ljust(@@col_wid[idx])}  Does not load!"
-        end
-      end
+    def loads1(req, str, idx)
+      require req
+      "#{str.ljust(@@col_wid[idx])}  Ok"
+    rescue LoadError
+      "#{str.ljust(@@col_wid[idx])}  Does not load!"
     end
 
-    def loads2?(req1, str1, req2, str2, idx)
+    def loads2(req1, str1, req2, str2, idx)
       begin
         require req1
-        str = "#{str1.ljust(@@col_wid[idx])}  Ok".ljust(@@col_wid[0])
+        str = "#{str1.ljust(@@col_wid[idx])}  Ok            "
       rescue LoadError
-        str = "#{str1.ljust(@@col_wid[idx])}  Does not load!".ljust(@@col_wid[0])
+        str = "#{str1.ljust(@@col_wid[idx])}  LoadError     "
       end
       begin
         require req2
-        puts str + "#{str2.ljust(@@col_wid[idx+1])}  Ok"
+        str + "#{str2.ljust(@@col_wid[idx])}  Ok"
       rescue LoadError
-        puts str + "#{str2.ljust(@@col_wid[idx+1])}  Does not load!"
+        str + "#{str2.ljust(@@col_wid[idx])}  LoadError"
       end
     end
 
@@ -214,26 +192,33 @@ module VersInfo
 
       ary.each { |s|
         gem_name = s[/\A[^ ]+/]
+        is_default = false
+        all_vers = ''.dup
+        cnt_vers = 0
         s.scan(/(default: |\(|, )(\d+\.\d+[^,)]*)/) { |type, vers|
           if type == 'default: '
-            ary_default << [gem_name, vers]
-          else
-            ary_bundled << [gem_name, vers]
+            is_default ||= true
           end
+          all_vers += " #{vers}"
+          cnt_vers += 1
         }
+        if is_default
+          ary_default << [gem_name, all_vers.strip, cnt_vers]
+        else
+          ary_bundled << [gem_name, all_vers.strip, cnt_vers]
+        end
       }
-      puts
-      highlight "#{@@dash * 21} #{"Default Gems #{@@dash * 5}".ljust(33)} #{@@dash * 21} Bundled Gems #{@@dash * 4}"
+      highlight "\n#{@@dash * 23} #{"Default Gems #{@@dash * 5}".ljust(27)} #{@@dash * 23} Bundled Gems #{@@dash * 5}"
 
       max_rows = [ary_default.length || 0, ary_bundled.length || 0].max
       (0..(max_rows-1)).each { |i|
-        dflt  = ary_default[i] ? ary_default[i] : ["", ""]
-        bndl  = ary_bundled[i] ? ary_bundled[i] : nil
-        if bndl
-          puts "#{dflt[1].rjust(21)} #{dflt[0].ljust(33)} #{bndl[1].rjust(21)} #{bndl[0]}"
-        else
-          puts "#{dflt[1].rjust(21)} #{dflt[0]}"
-        end
+        dflt = ary_default[i] ? ary_default[i] : ["", "", 0]
+        bndl = ary_bundled[i] ? ary_bundled[i] : nil
+
+        str_dflt = "#{dflt[1].rjust(23)} #{dflt[0].ljust(27)}"
+        str_bndl = bndl ? "#{bndl[1].rjust(23)} #{bndl[0]}" : ''
+
+        puts bndl ? "#{str_dflt} #{str_bndl}".rstrip : "#{str_dflt}".rstrip
       }
     ensure
       sio_in.close
@@ -292,10 +277,23 @@ module VersInfo
       "*** FAILURE ***"
     end
 
-    def highlight(str)
-      puts "#{YELLOW}#{str}#{RESET}"
+    def chk_cli(str, cmd, regex)
+      require 'open3'
+      ret = ''.dup
+      Open3.popen3(cmd) {|stdin, stdout, stderr, wait_thr|
+        ret = stdout.read.strip
+      }
+      "#{str.ljust(@@col_wid[4])}#{(ret[regex] && true ? 'Ok' : 'No version?').ljust(@@col_wid[3])}"
+    rescue
+      "#{str.ljust(@@col_wid[4])}#{'Missing binstub'.ljust(@@col_wid[3])}"
     end
-   
+
+    def highlight(str)
+      str2 = str.dup
+      while str2.sub!(/\A\n/, '') do ; puts ; end
+      puts "#{YELLOW}#{str2}#{RESET}"
+    end
+
   end
 end
 
