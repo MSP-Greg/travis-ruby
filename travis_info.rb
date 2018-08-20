@@ -230,41 +230,17 @@ module VersInfo
 
     def ssl_methods
       ssl = OpenSSL::SSL
-      if OpenSSL::VERSION <= '2.0.9'
+      if RUBY_VERSION < '2.0'
         additional('SSLContext::METHODS', 0, 4) {
           ssl::SSLContext::METHODS.reject { |e| /client|server/ =~ e }.sort.join(' ')
         }
       else
-        additional('SSLContext versions', 0, 4) {
-          ctx = OpenSSL::SSL::SSLContext.new
-          if  ctx.respond_to? :min_version=
-            ssl_methods = []
-            all_ssl_meths =
-            [ [ssl::SSL2_VERSION  , 'SSLv2'  ],
-              [ssl::SSL3_VERSION  , 'SSLv3'  ],
-              [ssl::TLS1_VERSION  , 'TLSv1'  ],
-              [ssl::TLS1_1_VERSION, 'TLSv1_1'],
-              [ssl::TLS1_2_VERSION, 'TLSv1_2']
-            ]
-            if defined? ssl::TLS1_3_VERSION
-              all_ssl_meths << [ssl::TLS1_3_VERSION, 'TLSv1_3']
-            end
-            all_ssl_meths.each { |m|
-              begin
-                ctx.min_version = m[0]
-                ctx.max_version = m[0]
-                ssl_methods << m[1]
-              rescue
-              end
-            }
-            ssl_methods.join(' ')
-          else
-            ''
-          end
+        require_relative 'ssl_test'
+        additional('Available Protocols', 0, 4) {
+          TestSSL.check_supported_protocol_versions
         }
       end
     end
-
     def ssl_verify
       if RUBY_VERSION < '2.0'
         "*** Unknown ***"
