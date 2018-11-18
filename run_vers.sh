@@ -44,12 +44,12 @@ echo rvm use 2.4
 rvm use 2.4 > /dev/null 2>&1 &&
 ruby travis_info.rb
 
-rvm install 2.4.4 --binary > /dev/null 2>&1 &&
-rvm use 2.4.4 &&
+rvm install 2.4.5 --binary > /dev/null 2>&1 &&
+rvm use 2.4.5 &&
 ruby travis_info.rb
 
-rvm install 2.5.1 --binary > /dev/null 2>&1 &&
-rvm use 2.5.1 &&
+rvm install 2.5.3 --binary > /dev/null 2>&1 &&
+rvm use 2.5.3 &&
 ruby travis_info.rb
 
 rvm install ruby-head --binary > /dev/null 2>&1 &&
