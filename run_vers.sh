@@ -26,9 +26,9 @@ rvm use      2.3.8 && ruby travis_info.rb
 echo rvm use 2.4
 rvm use      2.4   > /dev/null 2>&1 && ruby travis_info.rb
 
-echo rvm use 2.4.5
-rvm install  2.4.5 --binary > /dev/null 2>&1 &&
-rvm use      2.4.5 && ruby travis_info.rb
+echo rvm use 2.4.6
+rvm install  2.4.6 --binary > /dev/null 2>&1 &&
+rvm use      2.4.6 && ruby travis_info.rb
 
 echo rvm use 2.5
 rvm use      2.5   > /dev/null 2>&1 && ruby travis_info.rb
@@ -41,9 +41,9 @@ echo rvm use 2.6
 rvm install  2.6 --binary > /dev/null 2>&1 &&
 rvm use      2.6 && ruby travis_info.rb
 
-echo rvm use 2.6.2
-rvm install  2.6.2 --binary > /dev/null 2>&1 &&
-rvm use      2.6.2 && ruby travis_info.rb
+echo rvm use 2.6.3
+rvm install  2.6.3 --binary > /dev/null 2>&1 &&
+rvm use      2.6.3 && ruby travis_info.rb
 
 rvm install ruby-head --binary > /dev/null 2>&1 &&
 rvm use ruby-head && ruby travis_info.rb
