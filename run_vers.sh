@@ -2,15 +2,14 @@
 
 echo rvm use 2.0.0-p648
 rvm install ruby-2.0.0-p648 --binary > /dev/null 2>&1 && 
-rvm use ruby-2.0.0-p648 &&
-ruby travis_info.rb
+rvm use ruby-2.0.0-p648 && ruby travis_info.rb
 
 echo rvm use 2.1.10
 rvm install  2.1.10 --binary > /dev/null 2>&1 &&
 rvm use      2.1.10 && ruby travis_info.rb
 
 echo rvm use 2.2
-rvm use      2.2  > /dev/null 2>&1 && ruby travis_info.rb
+rvm use      2.2   > /dev/null 2>&1 && ruby travis_info.rb
 
 echo rvm use 2.2.10
 rvm install  2.2.10 --binary > /dev/null 2>&1 &&
@@ -38,8 +37,7 @@ rvm install  2.5.5 --binary > /dev/null 2>&1 &&
 rvm use      2.5.5 && ruby travis_info.rb
 
 echo rvm use 2.6
-rvm install  2.6 --binary > /dev/null 2>&1 &&
-rvm use      2.6 && ruby travis_info.rb
+rvm use      2.6   && ruby travis_info.rb
 
 echo rvm use 2.6.3
 rvm install  2.6.3 --binary > /dev/null 2>&1 &&
