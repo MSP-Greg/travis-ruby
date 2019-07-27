@@ -105,7 +105,7 @@ case "$os" in
     rvm install ruby-head --binary > /dev/null 2>&1 &&
     rvm use ruby-head && ruby travis_info.rb
     ;;
-  "osx xcode 10.2")
+  "osx xcode 11")
     echo rvm use 2.2.10
     rvm install  2.2.10 --binary > /dev/null 2>&1 &&
     rvm use      2.2.10 && ruby travis_info.rb
