@@ -14,8 +14,8 @@ matrix:
       dist: bionic
       env: os="bionic 18.04"
     - os: osx
-      osx_image: xcode10.2
-      env: os="osx xcode 10.2"
+      osx_image: xcode11
+      env: os="osx xcode 11"
 
 script:
   - /bin/bash --login "run_vers.sh"
