@@ -98,6 +98,13 @@ case "$os" in
     rvm use ruby-head && ruby travis_info.rb
     ;;
   "bionic 18.04")
+    echo rvm use 2.5
+    rvm use      2.5   > /dev/null 2>&1 && ruby travis_info.rb
+
+    echo rvm use 2.5.7
+    rvm install  2.5.7 --binary > /dev/null 2>&1 &&
+    rvm use      2.5.7 && ruby travis_info.rb
+
     echo rvm use 2.6.5
     rvm install  2.6.5 --binary > /dev/null 2>&1 &&
     rvm use      2.6.5 && ruby travis_info.rb
