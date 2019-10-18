@@ -6,6 +6,33 @@ require "rbconfig" unless defined? RbConfig
 
 module VersInfo
 
+  BAD_SIGNAL_LIST = begin
+    code = <<-HEREDOC
+      data = (%w[HUP INT TTIN TTOU USR1 USR2] - Signal.list.keys).join(' ')
+
+      begin
+        Signal.trap('TERM') { }
+      rescue ArgumentError
+        data << 'TERM'
+      end
+
+      puts data
+    HEREDOC
+    pipe = IO.popen RbConfig.ruby, 'r+'
+    pid = pipe.pid
+    pipe.puts code
+    pipe.close_write
+
+    begin
+      Process.kill :TERM, pid
+      pipe.read.strip.split(' ').sort.map(&:to_sym)
+    rescue Errno::EINVAL
+      "#{pipe.read.strip} TERM".split(' ').sort.map(&:to_sym)
+    ensure
+      Process.wait pid
+    end
+  end
+
   YELLOW = "\e[33m" # "\e[0;33m"
   RESET = "\e[0m"
 
@@ -83,6 +110,8 @@ module VersInfo
 
       puts chk_cli("rake -V", /\Arake, version (\d{1,2}\.\d{1,2}\.\d{1,2}(\.[a-z0-9]+)?)/) +
         loads1('fiddle' , 'Fiddle', 4)
+
+      puts '', "Unavailable signals: #{BAD_SIGNAL_LIST.join(' ')}", ''
 
       gem_list
       highlight "#{@@dash * 100}"
